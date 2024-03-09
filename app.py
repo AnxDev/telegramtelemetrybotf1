@@ -10,22 +10,22 @@ def returnBot():
 
 bot = returnBot()
 print("Bot on.")
-
+bot.send_message(1694709046, "bot on")
 def chiudi_messaggio(messaggio):
     markup = InlineKeyboardMarkup()
     markup.row_width = 1
     markup.add(InlineKeyboardButton("Chiudi", callback_data="cb_yes"),
                                InlineKeyboardButton("No", callback_data="cb_no"))
     return markup
-@bot.message_handler(commands="start")
+@bot.message_handler(commands=["start"])
 def start(message):
     bot.send_message(message.chat.id, "Questo bot ha lo scopo di mandare i tempi sul giro di tutte le sessioni di F1 di uno specifico pilota.\nI tempi sul giro diventeranno disponibili dopo circa 1 ora-1 ora e mezza dalla fine della sessione.\nDigita /help per avere maggiore informazioni sui comandi\nQuesto bot è stato creato da @andreanxx")
 
-@bot.message_handler(commands="help")
+@bot.message_handler(commands=["help"])
 def help(message):
     lista_comandi = "LISTA DEI COMANDI:\n/sessione [anno] [circuito] [tipo_sessione] [pilota] - Questo comando ti darà i tempi sul giro di un pilota a tua scelta. Per utilizzarlo dovrai inserire l'anno della sessione, il nome del circuito, il tipo di sessione e il pilota.\nI tipi di sessione che puoi inserire: 'R' (gara), 'Q' (qualifica), 'SQ' (qualifica sprint), 'FP1' (prova lib.1), 'FP2' (prova lib.2), 'FP3' (prova lib.3)\nI nomi dei piloti dovranno essere inseriti con il loro cognome abbreviato di 3 caratteri (Es: LEC,VER,ALO,SAI,NOR). Se non te li ricordi, puoi ottenere una lista dei nomi dei piloti abbreviati con il comando /nomi_piloti.\nES UTILIZZO DEL COMANDO /sessione:\n/sessione 2024 Bahrain R LEC"
     bot.send_message(message.chat.id, lista_comandi)
-@bot.message_handler(commands="nomi_piloti")
+@bot.message_handler(commands=["nomi_piloti"])
 def nomi_piloti(message):
     lista_piloti = """
 ALB	Alexander Albon
