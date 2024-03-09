@@ -70,9 +70,9 @@ def get_sessione(message):
         race = fastf1.get_session(anno,track,tipo)
         race.load()
         bot.delete_message(message.chat.id, attendi_messaggio.message_id)
-        laps = race.laps.pick_driver(pilota).reset_index()
+        laps = race.laps.pick_driver(pilota.upper()).reset_index()
         lap_times = [str(index) + ". " +str(lap) for index,lap in enumerate(laps['LapTime'])]
-        testo = f"TEMPI DI {pilota} in {track} nella {tipo}:\n" + "\n".join(lap_times).replace("0 days 00:", "")
+        testo = f"TEMPI DI {pilota} in {track} {anno} nella {tipo}:\n" + "\n".join(lap_times).replace("0 days 00:", "")
         if(len(lap_times) > 0):
             markup = InlineKeyboardMarkup(row_width=1)
             chiudi = InlineKeyboardButton('Chiudi', callback_data='chiusura')
