@@ -59,6 +59,7 @@ def get_grafico(message):
     grafico_png = open(path_name, 'rb')
     bot.send_photo(message.chat.id, grafico_png)
     os.remove(path_name)
+    plt.close()
     #bot.reply_to(message, testo, reply_markup = markup)
 @bot.message_handler(commands=["help"])
 def help(message):
