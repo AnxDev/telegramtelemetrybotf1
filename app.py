@@ -4,6 +4,10 @@ from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import threading
 #from commands.start_command import start
 import fastf1
+import matplotlib.pyplot as plt
+import fastf1.plotting
+import numpy as nmp
+import os
 def returnBot():
     token = "***REMOVED***"
     return telebot.TeleBot(token)
@@ -22,7 +26,40 @@ def chiudi_messaggio(messaggio):
 @bot.message_handler(commands=["start"])
 def start(message):
     bot.send_message(message.chat.id, "Questo bot ha lo scopo di mandare i tempi sul giro di tutte le sessioni di F1 di uno specifico pilota.\nI tempi sul giro diventeranno disponibili dopo circa 1 ora-1 ora e mezza dalla fine della sessione.\nDigita /help per avere maggiore informazioni sui comandi\nQuesto bot è stato creato da @andreanxx")
+@bot.message_handler(commands=["grafico"])
+def get_grafico(message):
+    args = message.text.split()
+    anno = int(args[1])
+    track = args[2]
+    tipo = args[3]
+    pilota1 = args[4]
+    pilota2 = args[5]
+    #if len(pilota1) != 3 or len(pilota2):
+    #    bot.reply_to(message, "Pilota non valido, ricorda di mandare il pilota nella formattazione a 3 caratteri, es: LEC,ALO,VER,SAI")
+    #else:
+    attendi_messaggio = bot.reply_to(message, "Carico la sessione...")
+    race = fastf1.get_session(anno,track,tipo)
+    race.load()
+    bot.delete_message(message.chat.id, attendi_messaggio.message_id)
+    laps1 = race.laps.pick_driver(pilota1.upper()).reset_index()
+    laps2 = race.laps.pick_driver(pilota2.upper()).reset_index()
+    fastf1.plotting.setup_mpl(misc_mpl_mods=False)
+    markup = InlineKeyboardMarkup(row_width=1)
+    chiudi = InlineKeyboardButton('Chiudi', callback_data='chiusura')
+    plt.plot(laps1['LapTime'], label=pilota1)
+    plt.plot(laps2['LapTime'], label=pilota2)
+    plt.title(f'{track} {anno} | {pilota1} vs {pilota2} | nella {tipo}')
 
+    plt.xlabel('giri')
+    plt.ylabel('tempo (1min)')
+    plt.legend(loc="upper right", labelcolor="white")
+    path_name = f'{anno}{track}{tipo}{pilota1}{pilota2}.png'
+    plt.savefig(path_name)
+    markup.add(chiudi)
+    grafico_png = open(path_name, 'rb')
+    bot.send_photo(message.chat.id, grafico_png)
+    os.remove(path_name)
+    #bot.reply_to(message, testo, reply_markup = markup)
 @bot.message_handler(commands=["help"])
 def help(message):
     lista_comandi = "LISTA DEI COMANDI:\n/sessione [anno] [circuito] [tipo_sessione] [pilota] - Questo comando ti darà i tempi sul giro di un pilota a tua scelta. Per utilizzarlo dovrai inserire l'anno della sessione, il nome del circuito, il tipo di sessione e il pilota.\nI tipi di sessione che puoi inserire: 'R' (gara), 'Q' (qualifica), 'SQ' (qualifica sprint), 'FP1' (prova lib.1), 'FP2' (prova lib.2), 'FP3' (prova lib.3)\nI nomi dei piloti dovranno essere inseriti con il loro cognome abbreviato di 3 caratteri (Es: LEC,VER,ALO,SAI,NOR). Se non te li ricordi, puoi ottenere una lista dei nomi dei piloti abbreviati con il comando /nomi_piloti.\nES UTILIZZO DEL COMANDO /sessione:\n/sessione 2024 Bahrain R LEC"
@@ -97,6 +134,7 @@ def register_handlers():
 #register_handlers()
 
 def main():        
+    plt.switch_backend('agg')
     bot.polling(non_stop=True)
 def commandqueue():
     while 1:
