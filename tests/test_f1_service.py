@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pytest
 
 from f1_service import (
@@ -9,6 +11,7 @@ from f1_service import (
     build_lap_table,
     is_valid_session_type,
     lap_time_to_text,
+    lap_times_to_seconds,
     normalize_driver_code,
     parse_compare_args,
     parse_session_args,
@@ -89,3 +92,15 @@ class TestFormatting:
             ["SOFT", "MEDIUM"],
         )
         assert table == "1. SOFT - 01:32.456\n2. MEDIUM - 01:33.100"
+
+
+class TestLapTimesToSeconds:
+    def test_converts_timedelta_to_seconds(self) -> None:
+        assert lap_times_to_seconds([timedelta(minutes=1, seconds=32)]) == [92.0]
+
+    def test_skips_none_and_float_nan_values(self) -> None:
+        result = lap_times_to_seconds([timedelta(seconds=90), None, float("nan")])
+        assert result == [90.0]
+
+    def test_empty_input(self) -> None:
+        assert lap_times_to_seconds([]) == []

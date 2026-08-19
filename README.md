@@ -23,6 +23,13 @@ Send the bot a request and get back:
 Data is downloaded from the official F1 / FastF1 datasets and becomes available
 roughly **1–1.5 hours after a session ends**.
 
+## Demo
+
+A comparison chart of Max Verstappen (orange) vs. Charles Leclerc (red) at the
+2024 Bahrain Grand Prix, generated live by the bot with `/compare 2024 Bahrain R VER LEC`:
+
+![Lap time comparison chart](assets/2024BahrainRVERLEC.png)
+
 ## Features
 
 - Thread-safe background queue — several users can queue requests without blocking the bot

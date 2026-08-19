@@ -137,6 +137,20 @@ def lap_time_to_text(lap_time: str) -> str:
     return str(lap_time).replace("0 days 00:", "")
 
 
+def lap_times_to_seconds(lap_times: list[object]) -> list[float]:
+    """Convert FastF1 lap times (``datetime.timedelta``) into plain seconds.
+
+    Non-timed entries (``NaN``/``NaT``) are skipped, so the returned list
+    only contains real, plottable values.
+    """
+    seconds = []
+    for value in lap_times:
+        if not hasattr(value, "total_seconds"):
+            continue
+        seconds.append(float(value.total_seconds()))
+    return seconds
+
+
 def build_lap_table(lap_times: list[str], compounds: list[str]) -> str:
     """Combine compounds and lap times into a single readable block of text."""
     if not lap_times:
@@ -162,7 +176,7 @@ class F1Service:
         self, year: int, track: str, session_type: str, driver: str
     ) -> str:
         """Return a formatted lap-time table (with tyre compound) for a driver."""
-        laps = self._load_laps(year, track, session_type).pick_driver(driver)
+        laps = self._load_laps(year, track, session_type).pick_drivers(driver)
         lap_times = [str(value) for value in laps["LapTime"]]
         compounds = [str(value) for value in laps["Compound"]]
         return build_lap_table(lap_times, compounds)
@@ -176,25 +190,39 @@ class F1Service:
         driver2: str,
         output_dir: Path,
     ) -> Path:
-        """Plot per-lap times of two drivers into a PNG file and return its path."""
-        laps = self._load_laps(year, track, session_type)
-        laps1 = laps.pick_driver(driver1)
-        laps2 = laps.pick_driver(driver2)
+        """Plot per-lap times of two drivers (in seconds) into a PNG file.
 
-        setup_mpl(misc_mpl_mods=False)
-        plt.clf()
-        plt.plot(laps1["LapTime"], label=driver1)
-        plt.plot(laps2["LapTime"], label=driver2)
-        plt.title(
-            f"{track} {year} | {driver1} vs {driver2} | {SESSION_TYPE_NAMES.get(session_type, session_type)}"
+        The figure is created explicitly per call (``fig, ax``) so that
+        concurrent bot threads never share matplotlib's global state, which
+        could otherwise produce blank or mis-scaled charts.
+        """
+        laps = self._load_laps(year, track, session_type)
+        laps1 = laps.pick_drivers(driver1)
+        laps2 = laps.pick_drivers(driver2)
+
+        times1 = lap_times_to_seconds(laps1["LapTime"]) if not laps1.empty else []
+        times2 = lap_times_to_seconds(laps2["LapTime"]) if not laps2.empty else []
+        if not times1 or not times2:
+            raise NoDataError(
+                f"No lap data found for {driver1} / {driver2} "
+                f"in {track} {year} (session {session_type})."
+            )
+
+        setup_mpl(color_scheme="fastf1")
+        fig, ax = plt.subplots()
+        ax.plot(range(1, len(times1) + 1), times1, label=driver1)
+        ax.plot(range(1, len(times2) + 1), times2, label=driver2)
+        ax.set_title(
+            f"{track} {year} | {driver1} vs {driver2} | "
+            f"{SESSION_TYPE_NAMES.get(session_type, session_type)}"
         )
-        plt.xlabel("Lap")
-        plt.ylabel("Lap time")
-        plt.legend(loc="upper right")
-        plt.tight_layout()
+        ax.set_xlabel("Lap")
+        ax.set_ylabel("Lap time (s)")
+        ax.legend(loc="upper right")
+        fig.tight_layout()
 
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / f"{year}{track}{session_type}{driver1}{driver2}.png"
-        plt.savefig(output_path)
-        plt.close()
+        fig.savefig(output_path)
+        plt.close(fig)
         return output_path

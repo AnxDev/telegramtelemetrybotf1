@@ -17,6 +17,8 @@ env/
 
 # Chart artifacts produced at runtime
 *.png
+!assets/
+!assets/*.png
 tmp/
 
 # OS / IDE
