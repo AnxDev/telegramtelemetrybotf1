@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Environment / secrets
+.env
+
+# Chart artifacts produced at runtime
+*.png
+tmp/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
